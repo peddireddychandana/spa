@@ -1,0 +1,170 @@
+Here’s a **clean, powerful master prompt** you can use in any AI website generator (or give to a 3D designer / Framer / Spline / Three.js developer):
+
+---
+
+## 🚀 MASTER PROMPT — “Spa PRDTR” 3D Immersive Website
+
+Design a fully immersive **3D cinematic luxury beauty salon and spa website** for a premium brand called **“Spa PRDTR”**.
+
+The website should NOT feel like a traditional flat UI. Instead, it must feel like a **real-time 3D interactive walkthrough environment**, similar to Unreal Engine cinematic scenes or Apple-level product experiences.
+
+---
+
+## 🌟 CORE CONCEPT
+
+Create a **luxury 3D salon world** where the user explores the space by scrolling or dragging. The camera smoothly moves through different rooms of a high-end beauty salon and spa.
+
+The environment should feel like:
+
+* Ultra luxury hotel spa
+* Premium beauty studio
+* Futuristic wellness center
+* Cinematic architectural visualization
+
+---
+
+## 🏛️ 3D ENVIRONMENT DESIGN
+
+The homepage opens inside a **fully modeled luxury salon interior** featuring:
+
+* Grand reception entrance with glowing logo “Spa PRDTR”
+* Hair styling zone with mirrors, chairs, and soft LED lighting
+* Bridal makeup studio with Hollywood vanity lights
+* Spa massage rooms with candles, towels, and warm ambiance
+* Skincare facial treatment beds with soft fabric textures
+* Manicure & pedicure nail stations with elegant tools
+* Waxing & grooming private rooms
+
+### Visual Style:
+
+* Ultra realistic 3D architectural rendering
+* Marble floors (white + beige tones)
+* Gold accents and trims
+* Glass reflections and soft shadows
+* Warm golden cinematic lighting
+* Depth of field + volumetric light rays
+* Unreal Engine / V-Ray quality realism (8K detail feel)
+
+---
+
+## 🎥 CAMERA & INTERACTION
+
+* Scroll-based **cinematic camera movement**
+* Smooth transitions between salon zones (like a guided tour)
+* Parallax depth effects in every room
+* Hover interaction to highlight service areas
+* Click to zoom into a service zone
+
+---
+
+## 💇 SERVICE VISUALIZATION (3D FLOATING UI)
+
+Inside the environment, services appear as **floating glowing 3D panels**:
+
+* Hair Styling
+* Makeup & Beauty
+* Bridal Packages
+* Spa & Massage Therapy
+* Skincare Treatments
+* Manicure & Pedicure
+* Waxing Services
+
+Each panel:
+
+* Soft glassmorphism material
+* Glowing edges (gold/rose-gold)
+* Floating animation in space
+* Hover expands with details
+
+---
+
+## 🧖 HUMAN REALISM ELEMENTS
+
+Include realistic 3D human characters:
+
+* Client getting hair styled
+* Bride makeup transformation scene
+* Spa massage relaxation pose
+* Nail technician working on manicure
+* Skincare facial treatment session
+
+Style:
+
+* Natural skin tones
+* Calm expressions
+* Luxury spa attire
+* Soft cinematic lighting
+
+---
+
+## 🎛️ 3D NAVIGATION SYSTEM
+
+Add a floating **3D navigation menu**:
+
+* Home
+* Services
+* Spa
+* Bridal
+* Gallery
+* Contact
+
+Menu design:
+
+* Transparent glass UI
+* Subtle glow edges
+* Appears in 3D space, not flat screen overlay
+
+---
+
+## 📞 BOOKING INTEGRATION (3D UI)
+
+Inside the environment, include interactive glowing buttons:
+
+* “Book Appointment”
+* “Call Now”
+* “WhatsApp Chat”
+
+Design:
+
+* Floating 3D buttons embedded in environment
+* Neon gold glow
+* Soft pulse animation
+* Positioned near reception desk
+
+---
+
+## 🌫️ MOOD & ATMOSPHERE
+
+Overall aesthetic:
+
+* Luxury spa calmness
+* Silent cinematic ambiance
+* Soft ambient music feel (optional concept)
+* Warm golden + beige + white palette
+* Premium futuristic elegance
+
+Emotion to evoke:
+
+* Relaxation
+* Luxury
+* Trust
+* High-end beauty experience
+
+---
+
+## 🎬 FINAL EXPERIENCE GOAL
+
+The website should feel like:
+
+> “Walking through a real luxury spa in a cinematic movie, where every service is a living 3D experience.”
+
+Not a website — but a **premium 3D world of beauty and wellness**.
+
+---
+
+If you want next, I can also:
+⚡ Convert this into a **Spline 3D scene plan**
+⚡ Or build a **Three.js / React 3D website structure**
+⚡ Or design a **screen-by-screen UI storyboard**
+
+Just tell 👍

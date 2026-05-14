@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "BunwOg9y6fb4l57YkqhRS"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "0mgDoGr3GFN1iO_CurIVC"
+uri = "file://artifacts/mobile/assets/images/hero_spa.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "g4X8RI4JpVAVtPFPayRoG"
+uri = "file://artifacts/mobile/assets/images/bridal_hero.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "QG0NOH1-Wf4Dkt7FwWGFF"
+uri = "file://artifacts/mobile/assets/images/spa_massage.png"
+type = "image"
+title = "generated_image"
