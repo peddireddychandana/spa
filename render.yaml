@@ -24,3 +24,14 @@ services:
         value: 22
       - key: BASE_PATH
         value: /
+
+  - type: web
+    name: spa-frontend
+    runtime: static
+    repo: https://github.com/peddireddychandana/spa
+    rootDir: spa/frontend
+    buildCommand: pnpm install && pnpm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://spa-prdtr.onrender.com
