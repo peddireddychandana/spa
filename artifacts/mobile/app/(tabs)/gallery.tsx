@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dimensions,
   Image,
@@ -7,10 +7,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 
 const { width } = Dimensions.get("window");
@@ -19,113 +23,46 @@ const COL_WIDTH = (width - 40 - COL_GAP) / 2;
 
 const CATEGORIES = ["All", "Spa", "Hair", "Bridal", "Nails", "Skincare"];
 
-type GalleryItem = {
+type UploadedImage = {
   id: string;
+  uri: string;
   label: string;
   category: string;
-  tall?: boolean;
-  gradient: [string, string];
-  localImage?: any;
+  createdAt: string;
 };
 
-const GALLERY_ITEMS: GalleryItem[] = [
-  {
-    id: "1",
-    label: "Luxury Spa",
-    category: "Spa",
-    tall: true,
-    gradient: ["#2C4A3E", "#4A8C7A"],
-    localImage: require("@/assets/images/hero_spa.png"),
-  },
-  {
-    id: "2",
-    label: "Bridal Suite",
-    category: "Bridal",
-    gradient: ["#6D3B47", "#B76E79"],
-    localImage: require("@/assets/images/bridal_hero.png"),
-  },
-  {
-    id: "3",
-    label: "Massage Room",
-    category: "Spa",
-    tall: true,
-    gradient: ["#3D5A80", "#6B9CC4"],
-    localImage: require("@/assets/images/spa_massage.png"),
-  },
-  {
-    id: "4",
-    label: "Hair Styling",
-    category: "Hair",
-    gradient: ["#8B6914", "#C9A84C"],
-  },
-  {
-    id: "5",
-    label: "Nail Artistry",
-    category: "Nails",
-    tall: true,
-    gradient: ["#6B4F6E", "#A67FA6"],
-  },
-  {
-    id: "6",
-    label: "Skincare Ritual",
-    category: "Skincare",
-    gradient: ["#3D5A80", "#6B9CC4"],
-  },
-  {
-    id: "7",
-    label: "Bridal Makeup",
-    category: "Bridal",
-    tall: true,
-    gradient: ["#7B3F5E", "#B76E79"],
-  },
-  {
-    id: "8",
-    label: "Reception",
-    category: "Spa",
-    gradient: ["#2C4A3E", "#C9A84C"],
-  },
-  {
-    id: "9",
-    label: "Balayage",
-    category: "Hair",
-    gradient: ["#8B6914", "#7A5C3A"],
-  },
-  {
-    id: "10",
-    label: "Facial Treatment",
-    category: "Skincare",
-    tall: true,
-    gradient: ["#3D5A80", "#2C4A3E"],
-  },
-];
+const UPLOADS_KEY = "gallery_uploads";
 
-function GalleryCard({ item }: { item: GalleryItem }) {
-  const height = item.tall ? COL_WIDTH * 1.5 : COL_WIDTH * 0.9;
+function UploadCard({
+  image,
+  onDelete,
+}: {
+  image: UploadedImage;
+  onDelete: (id: string) => void;
+}) {
+  const height = COL_WIDTH * 1.2;
 
   return (
-    <Pressable style={[styles.card, { height }]}>
-      {item.localImage ? (
-        <>
-          <Image
-            source={item.localImage}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-          />
-          <LinearGradient
-            colors={["transparent", "rgba(13,10,7,0.7)"]}
-            style={StyleSheet.absoluteFill}
-          />
-        </>
-      ) : (
-        <LinearGradient
-          colors={item.gradient}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
-      )}
-      <Text style={styles.cardLabel}>{item.label}</Text>
-    </Pressable>
+    <View style={[styles.card, { height }]}>
+      <Image
+        source={{ uri: image.uri }}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.6)"]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.uploadMeta}>
+        <Text style={styles.cardLabel} numberOfLines={1}>
+          {image.label}
+        </Text>
+        <Text style={styles.cardCategory}>{image.category}</Text>
+      </View>
+      <Pressable style={styles.deleteBtn} onPress={() => onDelete(image.id)}>
+        <Feather name="trash-2" size={14} color="#fff" />
+      </Pressable>
+    </View>
   );
 }
 
@@ -135,10 +72,68 @@ export default function GalleryScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
   const [active, setActive] = useState("All");
+  const [uploads, setUploads] = useState<UploadedImage[]>([]);
+  const [showUpload, setShowUpload] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [newCategory, setNewCategory] = useState("Spa");
 
-  const filtered = active === "All"
-    ? GALLERY_ITEMS
-    : GALLERY_ITEMS.filter((i) => i.category === active);
+  useEffect(() => {
+    AsyncStorage.getItem(UPLOADS_KEY).then((data) => {
+      if (data) setUploads(JSON.parse(data));
+    });
+  }, []);
+
+  const saveUploads = useCallback(
+    async (updated: UploadedImage[]) => {
+      setUploads(updated);
+      await AsyncStorage.setItem(UPLOADS_KEY, JSON.stringify(updated));
+    },
+    [],
+  );
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.7,
+      ...(Platform.OS !== "web" ? { base64: true } : {}),
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    let uri = asset.uri;
+
+    if (Platform.OS === "web") {
+      const resp = await fetch(asset.uri);
+      const blob = await resp.blob();
+      const reader = new FileReader();
+      const b64 = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+      uri = b64;
+    }
+
+    const newImage: UploadedImage = {
+      id: Date.now().toString(),
+      uri,
+      label: newLabel.trim() || asset.fileName || `Upload ${uploads.length + 1}`,
+      category: newCategory,
+      createdAt: new Date().toISOString(),
+    };
+
+    await saveUploads([newImage, ...uploads]);
+    setNewLabel("");
+    setShowUpload(false);
+  };
+
+  const deleteImage = (id: string) => {
+    const updated = uploads.filter((u) => u.id !== id);
+    saveUploads(updated);
+  };
+
+  const filtered =
+    active === "All" ? uploads : uploads.filter((i) => i.category === active);
 
   const left = filtered.filter((_, i) => i % 2 === 0);
   const right = filtered.filter((_, i) => i % 2 !== 0);
@@ -150,7 +145,7 @@ export default function GalleryScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={{ paddingTop: topPad + 24, paddingHorizontal: 20 }}>
-        <Text style={[styles.eyebrow, { color: colors.primary }]}>OUR WORK</Text>
+        <Text style={[styles.eyebrow, { color: colors.primary }]}>OUR GALLERY</Text>
         <Text style={[styles.heading, { color: colors.foreground }]}>Gallery</Text>
       </View>
 
@@ -177,20 +172,105 @@ export default function GalleryScreen() {
                 { color: active === cat ? colors.primaryForeground : colors.mutedForeground },
               ]}
             >
-              {cat}
+              {cat} {cat !== "All" && `(${uploads.filter((u) => u.category === cat).length})`}
             </Text>
           </Pressable>
         ))}
       </ScrollView>
 
-      <View style={styles.masonry}>
-        <View style={styles.col}>
-          {left.map((item) => <GalleryCard key={item.id} item={item} />)}
+      {!showUpload ? (
+        <View style={{ paddingHorizontal: 20, paddingBottom: 16 }}>
+          <Pressable
+            onPress={() => setShowUpload(true)}
+            style={[styles.uploadBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+          >
+            <Feather name="plus" size={18} color={colors.primary} />
+            <Text style={[styles.uploadText, { color: colors.foreground }]}>
+              Upload Image
+            </Text>
+          </Pressable>
         </View>
-        <View style={styles.col}>
-          {right.map((item) => <GalleryCard key={item.id} item={item} />)}
+      ) : (
+        <View style={[styles.uploadForm, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TextInput
+            value={newLabel}
+            onChangeText={setNewLabel}
+            placeholder="Image label (optional)"
+            placeholderTextColor={colors.mutedForeground}
+            style={[styles.formInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 6 }}
+          >
+            {CATEGORIES.filter((c) => c !== "All").map((cat) => (
+              <Pressable
+                key={cat}
+                onPress={() => setNewCategory(cat)}
+                style={[
+                  styles.catChip,
+                  {
+                    backgroundColor: newCategory === cat ? colors.primary : colors.background,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    color: newCategory === cat ? colors.primaryForeground : colors.mutedForeground,
+                    fontSize: 12,
+                    fontFamily: "Inter_500Medium",
+                  }}
+                >
+                  {cat}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Pressable
+              onPress={pickImage}
+              style={[styles.formSubmit, { backgroundColor: colors.primary, flex: 1 }]}
+            >
+              <Feather name="image" size={16} color={colors.primaryForeground} />
+              <Text style={[styles.formSubmitText, { color: colors.primaryForeground }]}>
+                Choose & Upload
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setShowUpload(false)}
+              style={[styles.formSubmit, { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border }]}
+            >
+              <Text style={[styles.formSubmitText, { color: colors.mutedForeground }]}>Cancel</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      )}
+
+      {filtered.length === 0 ? (
+        <View style={{ paddingHorizontal: 20, paddingTop: 40, alignItems: "center" }}>
+          <Feather name="image" size={40} color={colors.mutedForeground} />
+          <Text style={{ color: colors.mutedForeground, marginTop: 12, fontFamily: "Inter_400Regular", fontSize: 14 }}>
+            {active === "All"
+              ? "No images yet. Tap Upload to add your first image."
+              : `No images in ${active}. Tap Upload to add one.`}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.masonry}>
+          <View style={styles.col}>
+            {left.map((item) => (
+              <UploadCard key={item.id} image={item} onDelete={deleteImage} />
+            ))}
+          </View>
+          <View style={styles.col}>
+            {right.map((item) => (
+              <UploadCard key={item.id} image={item} onDelete={deleteImage} />
+            ))}
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -211,17 +291,67 @@ const styles = StyleSheet.create({
   filters: {
     paddingHorizontal: 20,
     gap: 8,
-    paddingBottom: 16,
+    paddingBottom: 8,
     paddingTop: 4,
   },
   filterPill: {
     paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 100,
+    flexDirection: "row",
+    alignItems: "center",
   },
   filterText: {
     fontSize: 13,
     fontFamily: "Inter_500Medium",
+  },
+  uploadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: "dashed",
+  },
+  uploadText: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+  },
+  uploadForm: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    gap: 12,
+  },
+  formInput: {
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+  },
+  catChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  formSubmit: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  formSubmitText: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
   },
   masonry: {
     flexDirection: "row",
@@ -243,5 +373,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 0.3,
+  },
+  cardCategory: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
+  },
+  uploadMeta: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 12,
+  },
+  deleteBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "rgba(220, 38, 38, 0.85)",
+    borderRadius: 20,
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

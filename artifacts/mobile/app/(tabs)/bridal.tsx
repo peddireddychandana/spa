@@ -102,7 +102,7 @@ export default function BridalScreen() {
 
             <GlowButton
               label="Book This Package"
-              onPress={() => router.push("/(tabs)/book")}
+              onPress={() => router.push({ pathname: "/(tabs)/book", params: { packageId: pkg.id } })}
               style={{ marginTop: 20 }}
               variant={pkg.id === "signature" ? "rose" : pkg.id === "premier" ? "gold" : "outline"}
               size="sm"

@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
   Alert,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -13,10 +14,13 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { GlowButton } from "@/components/GlowButton";
-import { SERVICES } from "@/data/services";
+import { BRIDAL_PACKAGES, SERVICES } from "@/data/services";
 import { useColors } from "@/hooks/useColors";
+
+const WHATSAPP_NUMBERS = ["9000243600"];
 
 const TIMES = [
   "10:00 AM", "11:00 AM", "12:00 PM",
@@ -24,15 +28,53 @@ const TIMES = [
   "4:00 PM", "5:00 PM", "6:00 PM",
 ];
 
+function openWhatsApp(number: string, message: string) {
+  const url = `https://api.whatsapp.com/send?phone=${number}&text=${encodeURIComponent(message)}`;
+  if (Platform.OS === "web") {
+    window.open(url, "_blank");
+  } else {
+    Linking.openURL(url).catch(() => {});
+  }
+}
+
+function sendToWhatsApp(numbers: string[], message: string) {
+  numbers.forEach((num) => openWhatsApp(num, message));
+}
+
+function formatBookingMessage(
+  name: string,
+  phone: string,
+  service: string,
+  serviceDetails: string,
+  time: string,
+  notes: string,
+) {
+  let msg = `*New Booking Request*\n\n`;
+  msg += `*Name:* ${name}\n`;
+  msg += `*Phone:* ${phone}\n`;
+  msg += `*Service:* ${service}\n`;
+  if (serviceDetails) msg += `${serviceDetails}\n`;
+  msg += `*Preferred Time:* ${time}\n`;
+  if (notes) msg += `*Special Requests:* ${notes}\n`;
+  return msg;
+}
+
 export default function BookScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ packageId?: string }>();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
 
+  const preselectedPackage = params.packageId
+    ? BRIDAL_PACKAGES.find((p) => p.id === params.packageId)
+    : null;
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<string | null>(
+    preselectedPackage ? preselectedPackage.name : null,
+  );
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,6 +100,21 @@ export default function BookScreen() {
 
     setLoading(true);
     try {
+      const serviceDetails = preselectedPackage
+        ? preselectedPackage.includes.map((s) => `  • ${s}`).join("\n")
+        : "";
+
+      const msg = formatBookingMessage(
+        name.trim(),
+        phone.trim(),
+        selectedService,
+        serviceDetails,
+        selectedTime,
+        notes.trim(),
+      );
+
+      sendToWhatsApp(WHATSAPP_NUMBERS, msg);
+
       const appointment = {
         id: Date.now().toString(),
         name: name.trim(),
@@ -77,7 +134,7 @@ export default function BookScreen() {
 
       Alert.alert(
         "Appointment Requested",
-        `Thank you, ${name}! Our team will confirm your booking shortly via WhatsApp or call.`,
+        `Thank you, ${name}! Your details have been sent via WhatsApp.`,
         [{ text: "Done", onPress: () => {
           setName(""); setPhone(""); setSelectedService(null);
           setSelectedTime(null); setNotes("");
@@ -89,6 +146,9 @@ export default function BookScreen() {
   };
 
   const selectedServiceObj = SERVICES.find((s) => s.id === selectedService);
+  const serviceDisplayName = preselectedPackage
+    ? `${preselectedPackage.name} (${preselectedPackage.price})`
+    : selectedServiceObj?.name;
   const inputStyle = [styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }];
 
   return (
@@ -111,7 +171,10 @@ export default function BookScreen() {
 
       <View style={styles.content}>
         <View style={styles.quickActions}>
-          <Pressable style={[styles.qBtn, { backgroundColor: colors.card, borderColor: "#25D366" + "44" }]}>
+          <Pressable
+            style={[styles.qBtn, { backgroundColor: colors.card, borderColor: "#25D366" + "44" }]}
+            onPress={() => sendToWhatsApp(WHATSAPP_NUMBERS, "Hi! I'd like to book an appointment at Spa Prdtr.")}
+          >
             <Feather name="message-circle" size={18} color="#25D366" />
             <Text style={[styles.qBtnText, { color: colors.foreground }]}>WhatsApp</Text>
           </Pressable>
@@ -150,14 +213,32 @@ export default function BookScreen() {
           />
         </View>
 
+        {preselectedPackage && (
+          <View style={[styles.section, { backgroundColor: colors.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: preselectedPackage.color + "44" }]}>
+            <Text style={[styles.label, { color: preselectedPackage.color }]}>SELECTED PACKAGE</Text>
+            <Text style={[styles.packageName, { color: colors.foreground, fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 8 }]}>
+              {preselectedPackage.name}
+            </Text>
+            <Text style={[styles.packagePrice, { color: preselectedPackage.color, fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 12 }]}>
+              {preselectedPackage.price}
+            </Text>
+            {preselectedPackage.includes.map((item) => (
+              <View key={item} style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <Feather name="check" size={12} color={preselectedPackage.color} />
+                <Text style={{ color: colors.mutedForeground, fontSize: 13, fontFamily: "Inter_400Regular" }}>{item}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={[styles.label, { color: colors.mutedForeground }]}>SERVICE</Text>
           <Pressable
             onPress={() => setServiceOpen(!serviceOpen)}
             style={[styles.input, styles.picker, { backgroundColor: colors.card, borderColor: serviceOpen ? colors.primary : colors.border }]}
           >
-            <Text style={{ color: selectedServiceObj ? colors.foreground : colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 15 }}>
-              {selectedServiceObj ? selectedServiceObj.name : "Select a service"}
+            <Text style={{ color: serviceDisplayName ? colors.foreground : colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 15 }}>
+              {serviceDisplayName || "Select a service"}
             </Text>
             <Feather name={serviceOpen ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
           </Pressable>
@@ -364,5 +445,15 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     textAlign: "center",
     marginTop: 16,
+  },
+  packageName: {
+    fontSize: 18,
+    fontFamily: "Inter_700Bold",
+    marginBottom: 8,
+  },
+  packagePrice: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    marginBottom: 12,
   },
 });
